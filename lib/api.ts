@@ -34,8 +34,14 @@ export async function apiSend<T>(
       json = null;
     }
   }
-  if (!res.ok || !json || !json.success) {
-    const message = json?.message || (res.status === 401 ? "Unauthorized" : `Request failed (${res.status}).`);
+
+  if (!json) {
+    const message = res.status === 401 ? "Unauthorized" : `Request failed (${res.status}).`;
+    throw new Error(message);
+  }
+
+  if (!res.ok || !json.success) {
+    const message = json.message || (res.status === 401 ? "Unauthorized" : `Request failed (${res.status}).`);
     throw new Error(message);
   }
 
