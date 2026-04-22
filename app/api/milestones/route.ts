@@ -3,7 +3,9 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { MilestoneModel } from "@/lib/models/Milestone";
 import { fail, getSearchQuery, ok, okWithHeaders, requireAuth } from "@/lib/api-helpers";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
       : {};
 
     const items = await MilestoneModel.find(filter).sort({ date: 1 }).lean();
-    return okWithHeaders(items, 200, { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" });
+    return okWithHeaders(items, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch milestones.", 500);
   }

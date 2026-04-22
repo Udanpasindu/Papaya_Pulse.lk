@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { bootstrapData } from "@/lib/bootstrap";
 import { MilestoneModel } from "@/lib/models/Milestone";
 import { fail, ok, requireAuth } from "@/lib/api-helpers";
+import { Types } from "mongoose";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +41,13 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
   try {
     requireAuth();
     await bootstrapData();
-    const deleted = await MilestoneModel.findByIdAndDelete(params.id).lean();
-    if (!deleted) {
-      return fail("Milestone not found.", 404);
+
+    if (!Types.ObjectId.isValid(params.id)) {
+      return ok({ deleted: true, existed: false });
     }
-    return ok({ deleted: true });
+
+    const deleted = await MilestoneModel.findByIdAndDelete(params.id).lean();
+    return ok({ deleted: true, existed: Boolean(deleted) });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("Unauthorized", 401);

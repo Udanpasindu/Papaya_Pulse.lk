@@ -44,6 +44,7 @@ export default function MilestonesAdminPage() {
     try {
       await apiSend(`/api/milestones/${id}`, "DELETE");
       setData(items.filter((x) => x._id !== id));
+      setMessage("Milestone deleted.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Delete failed.");
     }
