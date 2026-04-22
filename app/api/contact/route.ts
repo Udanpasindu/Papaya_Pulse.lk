@@ -3,6 +3,8 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { ContactMessageModel } from "@/lib/models/ContactMessage";
 import { fail, ok } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     await bootstrapData();

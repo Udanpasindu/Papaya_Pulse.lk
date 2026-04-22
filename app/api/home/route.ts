@@ -3,6 +3,8 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { HomeContentModel } from "@/lib/models/HomeContent";
 import { fail, ok, okWithHeaders, requireAuth } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     await bootstrapData();

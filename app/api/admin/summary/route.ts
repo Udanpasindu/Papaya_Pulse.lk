@@ -5,6 +5,8 @@ import { DocumentModel } from "@/lib/models/Document";
 import { PresentationModel } from "@/lib/models/Presentation";
 import { TeamMemberModel } from "@/lib/models/TeamMember";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     requireAuth();

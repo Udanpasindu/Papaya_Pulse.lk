@@ -3,6 +3,8 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { MilestoneModel } from "@/lib/models/Milestone";
 import { fail, getSearchQuery, ok, okWithHeaders, requireAuth } from "@/lib/api-helpers";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     await bootstrapData();

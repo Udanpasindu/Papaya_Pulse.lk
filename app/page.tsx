@@ -162,8 +162,8 @@ function Features({ data }: { data: HomeContentDTO | null }) {
 
 function ResearchFlow({ domain }: { domain: DomainContentDTO | null }) {
   const steps = [
-    { title: "Literature Survey", value: domain?.literature || [], type: "list" as const },
-    { title: "Research Gap", value: domain?.researchGap || [], type: "list" as const },
+    { title: "Literature Survey", value: (domain?.literature || []).join(" "), type: "paragraph" as const },
+    { title: "Research Gap", value: (domain?.researchGap || []).join(" "), type: "paragraph" as const },
     { title: "Research Problem", value: domain?.problem || "", type: "text" as const },
     { title: "Proposed Solution", value: domain?.proposedSolution || "", type: "text" as const },
     { title: "Research Objectives", value: domain?.objectives || [], type: "chips" as const },
@@ -207,16 +207,7 @@ function ResearchFlow({ domain }: { domain: DomainContentDTO | null }) {
                 <p className="text-sm sm:text-base text-white/68 leading-relaxed">{step.value}</p>
               )}
 
-              {step.type === "list" && (
-                <ul className="space-y-3 text-sm text-white/68 leading-relaxed">
-                  {step.value.slice(0, 4).map((item: string) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-primary shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {step.type === "paragraph" && <p className="text-sm sm:text-base text-white/68 leading-relaxed">{step.value}</p>}
 
               {step.type === "chips" && (
                 <div className="flex flex-wrap gap-2">

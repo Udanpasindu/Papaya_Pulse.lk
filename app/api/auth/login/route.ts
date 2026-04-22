@@ -4,6 +4,8 @@ import { ok, fail } from "@/lib/api-helpers";
 import { bootstrapData } from "@/lib/bootstrap";
 import { UserModel } from "@/lib/models/User";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     await bootstrapData();

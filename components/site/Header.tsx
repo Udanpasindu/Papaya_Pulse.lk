@@ -73,12 +73,6 @@ export function Header() {
                 </Link>
               );
             })}
-            <Link
-              href="/admin/login"
-              className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 transition shadow-[var(--shadow-glow)]"
-            >
-              Admin
-            </Link>
           </nav>
 
           <button
@@ -115,12 +109,6 @@ export function Header() {
                 </Link>
               );
             })}
-            <Link
-              href="/admin/login"
-              className="block mt-2 px-4 py-3 rounded-xl text-sm font-medium text-center bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"
-            >
-              Admin Login
-            </Link>
           </div>
         </div>
       </div>

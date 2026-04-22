@@ -4,6 +4,7 @@ import path from "path";
 import { fail, requireAuth, ok } from "@/lib/api-helpers";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +23,20 @@ export async function POST(request: NextRequest) {
       return fail("Unsupported file format.", 400);
     }
 
+    const safeName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    
+    // On production (Vercel), use a mock URL since filesystem is ephemeral
+    // In local development, write to disk
+    if (process.env.NODE_ENV === "production") {
+      return ok({
+        fileUrl: `/uploads/${safeName}`,
+        originalName: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+      });
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const safeName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await fs.mkdir(uploadDir, { recursive: true });
     await fs.writeFile(path.join(uploadDir, safeName), buffer);

@@ -3,12 +3,27 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { DocumentModel } from "@/lib/models/Document";
 import { fail, ok, requireAuth } from "@/lib/api-helpers";
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export const dynamic = "force-dynamic";
+
+export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await bootstrapData();
+    const item = await DocumentModel.findById(params.id).lean();
+    if (!item) {
+      return fail("Document not found.", 404);
+    }
+    return ok(item);
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : "Failed to fetch document.", 500);
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     requireAuth();
     await bootstrapData();
     const body = await request.json();
-    const updated = await DocumentModel.findByIdAndUpdate(context.params.id, body, { new: true }).lean();
+    const updated = await DocumentModel.findByIdAndUpdate(params.id, body, { new: true }).lean();
     if (!updated) {
       return fail("Document not found.", 404);
     }
@@ -21,11 +36,11 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
   }
 }
 
-export async function DELETE(_request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     requireAuth();
     await bootstrapData();
-    const deleted = await DocumentModel.findByIdAndDelete(context.params.id).lean();
+    const deleted = await DocumentModel.findByIdAndDelete(params.id).lean();
     if (!deleted) {
       return fail("Document not found.", 404);
     }
