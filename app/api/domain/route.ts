@@ -3,19 +3,21 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { DomainContentModel } from "@/lib/models/DomainContent";
 import { fail, ok, okWithHeaders, requireAuth } from "@/lib/api-helpers";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
     await bootstrapData();
     const content = await DomainContentModel.findOne().lean();
-    return okWithHeaders(content, 200, { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" });
+    return okWithHeaders(content, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch domain content.", 500);
   }
 }
 
-export async function PUT(request: NextRequest) {
+async function saveDomainContent(request: NextRequest) {
   try {
     requireAuth();
     await bootstrapData();
@@ -45,4 +47,12 @@ export async function PUT(request: NextRequest) {
     }
     return fail(error instanceof Error ? error.message : "Failed to update domain content.", 500);
   }
+}
+
+export async function POST(request: NextRequest) {
+  return saveDomainContent(request);
+}
+
+export async function PUT(request: NextRequest) {
+  return saveDomainContent(request);
 }

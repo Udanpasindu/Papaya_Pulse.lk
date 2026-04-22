@@ -34,7 +34,7 @@ export default function DomainAdminPage() {
     try {
       setSaving(true);
       setMessage("");
-      await apiSend("/api/domain", "PUT", form);
+      await apiSend("/api/domain", "POST", form);
       setMessage("Saved successfully.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Save failed.");
