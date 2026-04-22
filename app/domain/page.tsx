@@ -22,25 +22,11 @@ export default function DomainPage() {
         {data && (
           <>
             <Expandable icon={BookOpen} title="Literature Survey" subtitle="40+ peer-reviewed papers reviewed" defaultOpen>
-              <ul className="space-y-3">
-                {data.literature.map((l, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                    {l}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{data.literature.join(" ")}</p>
             </Expandable>
 
             <Expandable icon={Target} title="Research Gap" subtitle="What existing work misses">
-              <ul className="space-y-3">
-                {data.researchGap.map((l, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-muted-foreground">
-                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-secondary shrink-0" />
-                    {l}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{data.researchGap.join(" ")}</p>
             </Expandable>
 
             <Expandable icon={Lightbulb} title="Research Problem" subtitle="The driving question">
