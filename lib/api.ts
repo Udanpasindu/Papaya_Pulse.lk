@@ -25,9 +25,18 @@ export async function apiSend<T>(
     credentials: "include",
   });
 
-  const json = (await res.json()) as ApiResponse<T>;
+  const raw = await res.text();
+  let json: ApiResponse<T> | null = null;
+  if (raw) {
+    try {
+      json = JSON.parse(raw) as ApiResponse<T>;
+    } catch {
+      json = null;
+    }
+  }
   if (!res.ok || !json.success) {
-    throw new Error(json.message || "Request failed.");
+    const message = json?.message || (res.status === 401 ? "Unauthorized" : `Request failed (${res.status}).`);
+    throw new Error(message);
   }
 
   return json.data;

@@ -9,11 +9,15 @@ import type { MilestoneDTO } from "@/types/content";
 export default function MilestonesAdminPage() {
   const { data, loading, error, setData } = useApi<MilestoneDTO[]>("/api/milestones", "no-store");
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const items = data || [];
 
   const createMilestone = async () => {
+    if (creating) return;
     try {
+      setCreating(true);
+      setMessage("");
       const created = await apiSend<MilestoneDTO>("/api/milestones", "POST", {
         title: "New Milestone",
         date: new Date().toISOString().slice(0, 10),
@@ -22,10 +26,17 @@ export default function MilestonesAdminPage() {
         weight: "0%",
         status: "upcoming",
       });
-      setData([...(items || []), created]);
+      setData((prev) => [created, ...((prev || []) as MilestoneDTO[])]);
       setMessage("Milestone added.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Unable to add milestone.");
+      const message = err instanceof Error ? err.message : "Unable to add milestone.";
+      if (message === "Unauthorized") {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(message);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -35,7 +46,12 @@ export default function MilestonesAdminPage() {
       await apiSend(`/api/milestones/${id}`, "PUT", payload);
       setMessage("Milestone updated.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Update failed.");
+      const message = err instanceof Error ? err.message : "Update failed.";
+      if (message === "Unauthorized") {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(message);
     }
   };
 
@@ -43,10 +59,15 @@ export default function MilestonesAdminPage() {
     if (!id) return;
     try {
       await apiSend(`/api/milestones/${id}`, "DELETE");
-      setData(items.filter((x) => x._id !== id));
+      setData((prev) => ((prev || []) as MilestoneDTO[]).filter((x) => x._id !== id));
       setMessage("Milestone deleted.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Delete failed.");
+      const message = err instanceof Error ? err.message : "Delete failed.";
+      if (message === "Unauthorized") {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(message);
     }
   };
 
@@ -57,8 +78,12 @@ export default function MilestonesAdminPage() {
           <div className="text-xs uppercase tracking-[0.2em] text-primary mb-2">Milestones</div>
           <h1 className="font-display font-bold text-3xl">Manage Milestones</h1>
         </div>
-        <button onClick={createMilestone} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-leaf text-primary-foreground font-medium text-sm hover:shadow-[var(--shadow-glow)] transition">
-          <Plus className="h-4 w-4" /> New Milestone
+        <button
+          onClick={createMilestone}
+          disabled={creating}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-leaf text-primary-foreground font-medium text-sm hover:shadow-[var(--shadow-glow)] transition disabled:opacity-70"
+        >
+          <Plus className="h-4 w-4" /> {creating ? "Adding..." : "New Milestone"}
         </button>
       </div>
 

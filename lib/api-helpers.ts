@@ -23,5 +23,9 @@ export function requireAuth() {
   if (!token) {
     throw new Error("UNAUTHORIZED");
   }
-  return verifyToken(token);
+  try {
+    return verifyToken(token);
+  } catch {
+    throw new Error("UNAUTHORIZED");
+  }
 }
