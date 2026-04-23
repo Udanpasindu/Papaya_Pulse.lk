@@ -10,6 +10,7 @@ export default function TeamAdminPage() {
   const { data, loading, error, setData } = useApi<TeamMemberDTO[]>("/api/team", "no-store");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState<string>("");
+  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
   const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   const team = data || [];
 
@@ -107,6 +108,8 @@ export default function TeamAdminPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         {team.map((member, index) => {
           const memberId = member._id || member.email || `member-${index}`;
+          const rawImage = member.image || "/assets/team-1.jpg";
+          const imageSrc = failedImages[rawImage] ? "/assets/team-1.jpg" : rawImage;
           return (
             <div key={member._id || member.email || index} className="glass rounded-2xl p-4 flex gap-4">
               <button
@@ -117,14 +120,15 @@ export default function TeamAdminPage() {
                 title="Click to change profile picture"
               >
                 <img 
-                  src={member.image || "/assets/team-1.jpg"} 
+                  src={imageSrc}
                   alt={member.name} 
                   className="w-full h-full object-cover" 
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    if (!img.dataset.errorHandled) {
-                      img.dataset.errorHandled = "true";
-                      img.src = "/assets/team-1.jpg";
+                  onError={() => {
+                    if (rawImage !== "/assets/team-1.jpg") {
+                      setFailedImages((prev) => {
+                        if (prev[rawImage]) return prev;
+                        return { ...prev, [rawImage]: true };
+                      });
                     }
                   }}
                 />
