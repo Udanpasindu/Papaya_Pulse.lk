@@ -22,10 +22,14 @@ export async function PUT(request: NextRequest) {
     requireAuth();
     await bootstrapData();
     const body = await request.json();
+    const gallery = Array.isArray(body.gallery) ? body.gallery.filter((item: unknown) => typeof item === "string" && item.trim()) : [];
     const existing = await HomeContentModel.findOne();
 
     if (!existing) {
-      const created = await HomeContentModel.create(body);
+      const created = await HomeContentModel.create({
+        ...body,
+        gallery,
+      });
       return ok(created, 201);
     }
 
@@ -34,7 +38,7 @@ export async function PUT(request: NextRequest) {
     existing.features = body.features || [];
     existing.stats = body.stats || [];
     existing.heroImage = body.heroImage || "";
-    existing.gallery = body.gallery || [];
+    existing.gallery = gallery;
     await existing.save();
     return ok(existing);
   } catch (error) {

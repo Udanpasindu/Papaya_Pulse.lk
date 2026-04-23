@@ -10,6 +10,7 @@ export default function HomeAdminPage() {
   const { data, loading, error } = useApi<HomeContentDTO>("/api/home", "no-store");
   const [form, setForm] = useState<HomeContentDTO | null>(null);
   const [saved, setSaved] = useState("");
+  const [uploading, setUploading] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -26,18 +27,38 @@ export default function HomeAdminPage() {
     }
   };
 
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+
   const uploadGallery = async (files: FileList | null) => {
     if (!files || !form) return;
-    const uploaded: string[] = [];
+    try {
+      setUploading(true);
+      setSaved("");
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      const result = await apiSend<{ fileUrl: string }>("/api/upload", "POST", formData);
-      uploaded.push(result.fileUrl);
+      const uploaded: string[] = [];
+      for (const file of Array.from(files)) {
+        uploaded.push(await fileToDataUrl(file));
+      }
+
+      setForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              gallery: [...(prev.gallery || []), ...uploaded],
+            }
+          : prev,
+      );
+    } catch (err) {
+      setSaved(err instanceof Error ? err.message : "Image upload failed.");
+    } finally {
+      setUploading(false);
     }
-
-    setForm({ ...form, gallery: [...(form.gallery || []), ...uploaded] });
   };
 
   return (
@@ -71,9 +92,10 @@ export default function HomeAdminPage() {
               </div>
               <button
                 onClick={() => galleryInputRef.current?.click()}
+                disabled={uploading}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-[var(--shadow-glow)]"
               >
-                <Upload className="h-4 w-4" /> Upload Images
+                <Upload className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload Images"}
               </button>
             </div>
             <input
@@ -93,7 +115,16 @@ export default function HomeAdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, gallery: form.gallery.filter((_, i) => i !== index) })}
+                    onClick={() =>
+                      setForm((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              gallery: prev.gallery.filter((_, i) => i !== index),
+                            }
+                          : prev,
+                      )
+                    }
                     className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition"
                   >
                     <Trash2 className="h-4 w-4" />
