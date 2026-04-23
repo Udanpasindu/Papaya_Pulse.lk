@@ -76,8 +76,8 @@ export default function PresentationsPage() {
 
       {/* Preview Modal */}
       {selectedFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-card rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 animate-in fade-in duration-200">
+          <div className="w-[calc(100vw-1rem)] h-[calc(100vh-2rem)] max-w-full flex flex-col bg-card rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border/50">
               <div>
