@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Mail, Linkedin, Github } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { useApi } from "@/hooks/use-api";
@@ -61,7 +60,7 @@ function PersonCard({
   return (
     <div className="group rounded-3xl overflow-hidden border border-border bg-card shadow-[var(--shadow-card)] hover-lift">
       <div className={`relative ${large ? "aspect-[4/3]" : "aspect-square"} overflow-hidden`}>
-        <Image src={image || "/assets/team-1.jpg"} alt={name} fill className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+        <img src={image || "/assets/team-1.jpg"} alt={name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/8 to-transparent" />
       </div>
       <div className="p-5 bg-gradient-to-b from-card to-muted/70">

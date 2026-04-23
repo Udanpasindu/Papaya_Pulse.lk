@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Save, Upload, Trash2 } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
@@ -90,7 +89,7 @@ export default function HomeAdminPage() {
               {(form.gallery || []).map((src, index) => (
                 <div key={`${src}-${index}`} className="group relative overflow-hidden rounded-2xl border border-white/8 bg-white/[0.03]">
                   <div className="relative aspect-[4/3]">
-                    <Image src={src} alt={`Gallery image ${index + 1}`} fill className="object-cover" />
+                    <img src={src} alt={`Gallery image ${index + 1}`} className="w-full h-full object-cover" />
                   </div>
                   <button
                     type="button"

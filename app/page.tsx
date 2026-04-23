@@ -32,12 +32,10 @@ function Hero({ data, loading, error }: { data: HomeContentDTO | null; loading: 
   return (
     <section className="relative min-h-screen flex items-center pt-28 pb-16 overflow-hidden">
       <div className="absolute inset-0">
-        <Image
+        <img
           src={data?.heroImage || "/assets/hero-papaya.jpg"}
           alt="Smart papaya farm with AI overlays"
-          fill
           className="w-full h-full object-cover opacity-100"
-          priority
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/48 to-black/70" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(20,210,214,0.12),transparent_42%)]" />
@@ -267,12 +265,10 @@ function Gallery({ images }: { images: string[] }) {
             {images.slice(0, 8).map((src, index) => (
               <div key={`${src}-${index}`} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-card shadow-[var(--shadow-card)] hover-lift">
                 <div className="relative aspect-[4/3]">
-                  <Image
+                  <img
                     src={src}
                     alt={`Research gallery image ${index + 1}`}
-                    fill
-                    sizes="(max-width: 1024px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/12 to-transparent" />
                 </div>
