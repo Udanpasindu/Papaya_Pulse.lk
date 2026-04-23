@@ -35,6 +35,13 @@ export default function DocumentsPage() {
     link.click();
   };
 
+  const canPreviewPdf = (doc: DocumentDTO) => {
+    const mime = String(doc.mimeType || "").toLowerCase();
+    const title = String(doc.title || "").toLowerCase();
+    const url = String(doc.fileUrl || "").toLowerCase();
+    return mime.includes("pdf") || title.endsWith(".pdf") || url.startsWith("data:application/pdf");
+  };
+
   return (
     <PageShell
       breadcrumbs={[{ label: "Documents" }]}
@@ -110,7 +117,7 @@ export default function DocumentsPage() {
             </div>
 
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedDoc.fileUrl && selectedDoc.fileUrl.startsWith("data:application/pdf") ? (
+              {canPreviewPdf(selectedDoc) ? (
                 <iframe
                   src={selectedDoc.fileUrl}
                   width="100%"

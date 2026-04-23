@@ -7,6 +7,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function withResolvedFileUrl(doc: Record<string, unknown>) {
+  const hasBinary = Boolean(doc.hasBinary);
+  return {
+    ...doc,
+    fileUrl: hasBinary && doc._id ? `/api/documents/file/${String(doc._id)}` : String(doc.fileUrl || ""),
+    fileData: undefined,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     await bootstrapData();
@@ -20,8 +29,11 @@ export async function GET(request: NextRequest) {
         }
       : {};
 
-    const items = await DocumentModel.find(filter).sort({ createdAt: -1 }).lean();
-    return okWithHeaders(items, 200, { "Cache-Control": "no-store" });
+    const items = await DocumentModel.find(filter)
+      .select("title fileUrl hasBinary mimeType category size date createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+    return okWithHeaders(items.map((item) => withResolvedFileUrl(item as Record<string, unknown>)), 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch documents.", 500);
   }
@@ -31,11 +43,39 @@ export async function POST(request: NextRequest) {
   try {
     requireAuth();
     await bootstrapData();
-    const body = await request.json();
+    const contentType = request.headers.get("content-type") || "";
 
+    if (contentType.includes("multipart/form-data")) {
+      const form = await request.formData();
+      const file = form.get("file") as File | null;
+      const title = String(form.get("title") || file?.name || "").trim();
+      const category = String(form.get("category") || "Charter").trim();
+      const date = String(form.get("date") || "").trim();
+
+      if (!file || !title) {
+        return fail("File and title are required.", 400);
+      }
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const created = await DocumentModel.create({
+        title,
+        category,
+        date,
+        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+        mimeType: String(file.type || "application/octet-stream"),
+        fileData: buffer,
+        hasBinary: true,
+      });
+
+      const plain = created.toObject();
+      return ok(withResolvedFileUrl(plain as Record<string, unknown>), 201);
+    }
+
+    const body = await request.json();
     const payload = {
       title: String(body?.title || "").trim(),
       fileUrl: String(body?.fileUrl || "").trim(),
+      mimeType: String(body?.mimeType || "").trim(),
       category: String(body?.category || "Charter").trim(),
       size: String(body?.size || "").trim(),
       date: String(body?.date || "").trim(),
@@ -46,7 +86,8 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await DocumentModel.create(payload);
-    return ok(created, 201);
+    const plain = created.toObject();
+    return ok(withResolvedFileUrl(plain as Record<string, unknown>), 201);
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("Unauthorized", 401);

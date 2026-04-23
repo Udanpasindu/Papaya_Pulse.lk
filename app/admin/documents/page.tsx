@@ -22,21 +22,13 @@ export default function DocumentsAdminPage() {
       setMessage("");
       setUploading(true);
 
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i += 1) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const dataUrl = `data:${file.type || "application/octet-stream"};base64,${btoa(binary)}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", file.name);
+      formData.append("category", category);
+      formData.append("date", new Date().toISOString().slice(0, 10));
 
-      const created = await apiSend<DocumentDTO>("/api/documents", "POST", {
-        title: file.name,
-        fileUrl: dataUrl,
-        category,
-        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-        date: new Date().toISOString().slice(0, 10),
-      });
+      const created = await apiSend<DocumentDTO>("/api/documents", "POST", formData);
       setData((prev) => [created, ...(prev || [])]);
       setMessage("Document uploaded.");
     } catch (err) {
@@ -60,6 +52,13 @@ export default function DocumentsAdminPage() {
     link.download = doc.title || "document";
     link.rel = "noreferrer";
     link.click();
+  };
+
+  const canPreviewPdf = (doc: DocumentDTO) => {
+    const mime = String(doc.mimeType || "").toLowerCase();
+    const title = String(doc.title || "").toLowerCase();
+    const url = String(doc.fileUrl || "").toLowerCase();
+    return mime.includes("pdf") || title.endsWith(".pdf") || url.startsWith("data:application/pdf");
   };
 
   const onFiles = async (files: FileList | null) => {
@@ -178,7 +177,7 @@ export default function DocumentsAdminPage() {
             </div>
 
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedDoc.fileUrl && selectedDoc.fileUrl.startsWith("data:application/pdf") ? (
+              {canPreviewPdf(selectedDoc) ? (
                 <iframe
                   src={selectedDoc.fileUrl}
                   width="100%"

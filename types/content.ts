@@ -52,6 +52,7 @@ export interface DocumentDTO {
   _id?: string;
   title: string;
   fileUrl: string;
+  mimeType?: string;
   category: string;
   size?: string;
   date?: string;
