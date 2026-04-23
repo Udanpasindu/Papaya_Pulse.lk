@@ -31,6 +31,33 @@ export default function HomeAdminPage() {
     }
   };
 
+  const deleteGalleryImage = async (imageUrl: string, index: number) => {
+    if (!form) return;
+
+    const nextForm = {
+      ...form,
+      gallery: form.gallery.filter((_, i) => i !== index),
+    };
+
+    try {
+      setSaved("");
+
+      if (imageUrl.startsWith("/api/home/gallery/")) {
+        await apiSend(imageUrl, "DELETE");
+      } else {
+        await apiSend("/api/home", "PUT", {
+          ...nextForm,
+          gallery: nextForm.gallery,
+        });
+      }
+
+      setForm(nextForm);
+      setSaved("Gallery image deleted.");
+    } catch (err) {
+      setSaved(err instanceof Error ? err.message : "Delete failed.");
+    }
+  };
+
   const uploadGallery = async (files: FileList | null) => {
     if (!files || !form) return;
     try {
@@ -113,23 +140,7 @@ export default function HomeAdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!form) return;
-                      const imageUrl = form.gallery[index];
-                      const nextForm = {
-                        ...form,
-                        gallery: form.gallery.filter((_, i) => i !== index),
-                      };
-                      void (async () => {
-                        try {
-                          await apiSend(imageUrl, "DELETE");
-                          setForm(nextForm);
-                          setSaved("Gallery image deleted.");
-                        } catch (err) {
-                          setSaved(err instanceof Error ? err.message : "Delete failed.");
-                        }
-                      })();
-                    }}
+                    onClick={() => void deleteGalleryImage(form.gallery[index], index)}
                     className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition"
                   >
                     <Trash2 className="h-4 w-4" />
