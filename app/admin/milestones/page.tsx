@@ -13,6 +13,25 @@ export default function MilestonesAdminPage() {
 
   const items = data || [];
 
+  const mergeAndSave = async (
+    id: string | undefined,
+    partial: Partial<MilestoneDTO>,
+  ) => {
+    if (!id) return;
+
+    const current = (data || []).find((x) => x._id === id);
+    if (!current) return;
+
+    const next = { ...current, ...partial } as MilestoneDTO;
+
+    setData((prev) =>
+      ((prev || []) as MilestoneDTO[]).map((x) =>
+        x._id === id ? { ...x, ...partial } : x,
+      ),
+    );
+    await saveMilestone(id, next);
+  };
+
   const createMilestone = async () => {
     if (creating) return;
     try {
@@ -93,24 +112,60 @@ export default function MilestonesAdminPage() {
       <div className="space-y-3">
         {items.map((m, i) => (
           <div key={m._id || i} className="glass rounded-2xl p-5">
-            <div className="grid lg:grid-cols-[1fr_auto_auto] gap-3 items-start">
+            <div className="grid lg:grid-cols-[1fr_auto] gap-3 items-start">
               <div className="space-y-2">
                 <input
                   defaultValue={m.title}
-                  onBlur={(e) => saveMilestone(m._id, { ...m, title: e.target.value })}
+                  onBlur={(e) => mergeAndSave(m._id, { title: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-sm font-medium"
                 />
                 <textarea
                   defaultValue={m.description}
-                  onBlur={(e) => saveMilestone(m._id, { ...m, description: e.target.value })}
+                  onBlur={(e) => mergeAndSave(m._id, { description: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs resize-none text-muted-foreground"
                 />
               </div>
-              <input type="date" defaultValue={m.date} onBlur={(e) => saveMilestone(m._id, { ...m, date: e.target.value })} className="px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs w-36" />
-              <button onClick={() => removeMilestone(m._id)} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center">
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <input
+                    type="date"
+                    defaultValue={m.date}
+                    onBlur={(e) => mergeAndSave(m._id, { date: e.target.value })}
+                    className="px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    defaultValue={m.marks}
+                    onBlur={(e) => mergeAndSave(m._id, { marks: Number(e.target.value || 0) })}
+                    className="px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                    placeholder="Marks"
+                  />
+                  <input
+                    type="text"
+                    defaultValue={m.weight || "0%"}
+                    onBlur={(e) => mergeAndSave(m._id, { weight: e.target.value })}
+                    className="px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                    placeholder="Weight (e.g. 20%)"
+                  />
+                  <select
+                    defaultValue={m.status || "upcoming"}
+                    onChange={(e) => mergeAndSave(m._id, { status: e.target.value as MilestoneDTO["status"] })}
+                    className="px-3 py-2 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                  >
+                    <option value="upcoming">Upcoming</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+                <div className="flex justify-end">
+                  <button onClick={() => removeMilestone(m._id)} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ))}

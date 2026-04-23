@@ -4,7 +4,16 @@ import { MilestoneModel } from "@/lib/models/Milestone";
 import { fail, ok, requireAuth } from "@/lib/api-helpers";
 import { Types } from "mongoose";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function normalizeWeight(value: unknown) {
+  const raw = String(value || "").trim();
+  if (!raw) return "0%";
+  if (/^\d+(\.\d+)?$/.test(raw)) return `${raw}%`;
+  return raw;
+}
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -23,8 +32,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   try {
     requireAuth();
     await bootstrapData();
+
+    if (!Types.ObjectId.isValid(params.id)) {
+      return fail("Milestone not found.", 404);
+    }
+
     const body = await request.json();
-    const updated = await MilestoneModel.findByIdAndUpdate(params.id, body, { new: true }).lean();
+    const payload = {
+      title: String(body?.title || "").trim(),
+      date: String(body?.date || "").trim(),
+      description: String(body?.description || "").trim(),
+      marks: Number(body?.marks || 0),
+      weight: normalizeWeight(body?.weight),
+      status: String(body?.status || "upcoming"),
+    };
+
+    if (!payload.title || !payload.date || !payload.description) {
+      return fail("Title, date and description are required.", 400);
+    }
+
+    const updated = await MilestoneModel.findByIdAndUpdate(params.id, payload, {
+      new: true,
+      runValidators: true,
+    }).lean();
     if (!updated) {
       return fail("Milestone not found.", 404);
     }
