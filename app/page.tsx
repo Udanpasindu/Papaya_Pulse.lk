@@ -1,12 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Activity, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, Activity, ChevronDown, Code2 } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { useApi } from "@/hooks/use-api";
 import type { DomainContentDTO, HomeContentDTO } from "@/types/content";
+
+const TECH_ICON_MAP: Record<string, string> = {
+  python: "python",
+  tensorflow: "tensorflow",
+  pytorch: "pytorch",
+  opencv: "opencv",
+  fastapi: "fastapi",
+  react: "react",
+  typescript: "typescript",
+  postgresql: "postgresql",
+  docker: "docker",
+  aws: "amazonaws",
+  "edge tpu": "google",
+  prophet: "meta",
+};
+
+function getTechIconUrl(name: string) {
+  const key = name.trim().toLowerCase();
+  const slug = TECH_ICON_MAP[key];
+  if (!slug) return "";
+  return `https://cdn.simpleicons.org/${slug}/14d2d6`;
+}
+
+function TechnologyTag({ name }: { name: string }) {
+  const [iconError, setIconError] = useState(false);
+  const iconUrl = getTechIconUrl(name);
+
+  return (
+    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/12 border border-primary/20 text-xs text-white/90">
+      {!iconError && iconUrl ? (
+        <img
+          src={iconUrl}
+          alt={`${name} icon`}
+          className="h-3.5 w-3.5 object-contain"
+          onError={() => setIconError(true)}
+        />
+      ) : (
+        <Code2 className="h-3.5 w-3.5 text-primary" />
+      )}
+      <span>{name}</span>
+    </span>
+  );
+}
 
 export default function HomePage() {
   const { data, loading, error } = useApi<HomeContentDTO>("/api/home", "no-store");
@@ -231,9 +275,7 @@ function ResearchFlow({ domain }: { domain: DomainContentDTO | null }) {
               {step.type === "tags" && (
                 <div className="flex flex-wrap gap-2">
                   {step.value.map((item: string) => (
-                    <span key={item} className="px-3 py-1 rounded-full bg-primary/12 border border-primary/20 text-xs text-white/80">
-                      {item}
-                    </span>
+                    <TechnologyTag key={item} name={item} />
                   ))}
                 </div>
               )}
