@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileText, Download, Search } from "lucide-react";
+import { FileText, Download, Search, Eye, X } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { useApi } from "@/hooks/use-api";
 import type { DocumentDTO } from "@/types/content";
@@ -9,6 +9,7 @@ import type { DocumentDTO } from "@/types/content";
 export default function DocumentsPage() {
   const { data, loading, error } = useApi<DocumentDTO[]>("/api/documents");
   const [q, setQ] = useState("");
+  const [selectedDoc, setSelectedDoc] = useState<DocumentDTO | null>(null);
 
   const grouped = useMemo(() => {
     const map = new Map<string, DocumentDTO[]>();
@@ -22,6 +23,17 @@ export default function DocumentsPage() {
     });
     return Array.from(map.entries());
   }, [data, q]);
+
+  const downloadDoc = (doc: DocumentDTO) => {
+    const url = doc.fileUrl || "";
+    if (!url) return;
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = doc.title || "document";
+    link.rel = "noreferrer";
+    link.click();
+  };
 
   return (
     <PageShell
@@ -58,13 +70,20 @@ export default function DocumentsPage() {
                       <div className="font-medium text-sm truncate">{d.title}</div>
                       <div className="text-xs text-foreground/65">{d.size || "-"} {d.date ? `· ${d.date}` : ""}</div>
                     </div>
-                    <a
-                      href={d.fileUrl || "#"}
-                      target="_blank"
+                    <button
+                      onClick={() => setSelectedDoc(d)}
+                      className="h-10 w-10 rounded-lg border border-border bg-card hover:bg-muted/60 flex items-center justify-center transition"
+                      title="Preview document"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => downloadDoc(d)}
                       className="h-10 w-10 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground flex items-center justify-center transition"
+                      title="Download document"
                     >
                       <Download className="h-4 w-4" />
-                    </a>
+                    </button>
                   </article>
                 ))}
               </div>
@@ -72,6 +91,54 @@ export default function DocumentsPage() {
           ))}
         </div>
       </div>
+
+      {selectedDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 animate-in fade-in duration-200">
+          <div className="w-[calc(100vw-1rem)] h-[calc(100vh-2rem)] max-w-full flex flex-col bg-card rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-border/50">
+              <div>
+                <h2 className="font-display font-bold text-xl">{selectedDoc.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{selectedDoc.date || ""}</p>
+              </div>
+              <button
+                onClick={() => setSelectedDoc(null)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+                title="Close preview"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
+              {selectedDoc.fileUrl && selectedDoc.fileUrl.startsWith("data:application/pdf") ? (
+                <iframe
+                  src={selectedDoc.fileUrl}
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full border-none"
+                  title="Document preview"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                  <FileText className="h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    {selectedDoc.fileUrl ? "Preview is available for PDF files only." : "No file available."}
+                  </p>
+                  {selectedDoc.fileUrl && (
+                    <button
+                      onClick={() => downloadDoc(selectedDoc)}
+                      className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download File
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageShell>
   );
 }
