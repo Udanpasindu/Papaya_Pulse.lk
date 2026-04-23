@@ -10,12 +10,16 @@ export default function DocumentsAdminPage() {
   const { data, loading, error, setData } = useApi<DocumentDTO[]>("/api/documents", "no-store");
   const [category, setCategory] = useState("Charter");
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const docs = data || [];
 
   const uploadAndCreate = async (file: File) => {
     try {
+      setMessage("");
+      setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
       const upload = await apiSend<{ fileUrl: string; size: string }>("/api/upload", "POST", formData);
@@ -26,10 +30,17 @@ export default function DocumentsAdminPage() {
         size: upload.size,
         date: new Date().toISOString().slice(0, 10),
       });
-      setData([created, ...docs]);
+      setData((prev) => [created, ...(prev || [])]);
       setMessage("Document uploaded.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Upload failed.");
+      const text = err instanceof Error ? err.message : "Upload failed.";
+      if (text.toLowerCase().includes("unauthorized")) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(text);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -41,9 +52,26 @@ export default function DocumentsAdminPage() {
   };
 
   const removeDoc = async (id: string | undefined) => {
-    if (!id) return;
-    await apiSend(`/api/documents/${id}`, "DELETE");
-    setData(docs.filter((d) => d._id !== id));
+    if (!id) {
+      setMessage("Cannot delete: missing document ID.");
+      return;
+    }
+    try {
+      setMessage("");
+      setDeletingId(id);
+      await apiSend(`/api/documents/${id}`, "DELETE");
+      setData((prev) => (prev || []).filter((d) => d._id !== id));
+      setMessage("Document deleted.");
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Delete failed.";
+      if (text.toLowerCase().includes("unauthorized")) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(text);
+    } finally {
+      setDeletingId("");
+    }
   };
 
   return (
@@ -63,9 +91,9 @@ export default function DocumentsAdminPage() {
           </select>
         </div>
 
-        <button onClick={() => fileInputRef.current?.click()} className="w-full rounded-2xl border-2 border-dashed border-white/12 hover:border-primary/40 p-10 text-center transition bg-white/[0.02]">
+        <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="w-full rounded-2xl border-2 border-dashed border-white/12 hover:border-primary/40 p-10 text-center transition bg-white/[0.02] disabled:opacity-50 disabled:cursor-not-allowed">
           <Upload className="h-8 w-8 text-primary mx-auto mb-3" />
-          <div className="text-sm font-medium text-white">Drop PDFs here or click to browse</div>
+          <div className="text-sm font-medium text-white">{uploading ? "Uploading..." : "Drop PDFs here or click to browse"}</div>
           <div className="text-xs text-white/55 mt-1">PDF, DOC, DOCX up to 50MB</div>
         </button>
         <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => onFiles(e.target.files)} />
@@ -93,7 +121,7 @@ export default function DocumentsAdminPage() {
                 <a href={d.fileUrl || "#"} target="_blank" className="h-9 w-9 rounded-lg glass hover:bg-primary/15 transition flex items-center justify-center">
                   <Download className="h-3.5 w-3.5" />
                 </a>
-                <button onClick={() => removeDoc(d._id)} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center">
+                <button onClick={() => removeDoc(d._id)} disabled={deletingId === d._id} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>

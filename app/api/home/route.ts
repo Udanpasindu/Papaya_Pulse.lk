@@ -3,13 +3,15 @@ import { bootstrapData } from "@/lib/bootstrap";
 import { HomeContentModel } from "@/lib/models/HomeContent";
 import { fail, ok, okWithHeaders, requireAuth } from "@/lib/api-helpers";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
     await bootstrapData();
     const content = await HomeContentModel.findOne().lean();
-    return okWithHeaders(content, 200, { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" });
+    return okWithHeaders(content, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch home content.", 500);
   }
