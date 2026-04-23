@@ -17,23 +17,19 @@ export default function HomeAdminPage() {
     if (data) setForm({ ...data, gallery: data.gallery || [] });
   }, [data]);
 
-  const save = async () => {
-    if (!form) return;
+  const save = async (nextForm = form) => {
+    if (!nextForm) return;
     try {
-      await apiSend("/api/home", "PUT", form);
+      await apiSend("/api/home", "PUT", {
+        ...nextForm,
+        gallery: nextForm.gallery || [],
+      });
+      setForm(nextForm);
       setSaved("Saved successfully.");
     } catch (err) {
       setSaved(err instanceof Error ? err.message : "Save failed.");
     }
   };
-
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read image file."));
-      reader.readAsDataURL(file);
-    });
 
   const uploadGallery = async (files: FileList | null) => {
     if (!files || !form) return;
@@ -43,17 +39,19 @@ export default function HomeAdminPage() {
 
       const uploaded: string[] = [];
       for (const file of Array.from(files)) {
-        uploaded.push(await fileToDataUrl(file));
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("title", file.name);
+        const result = await apiSend<{ fileUrl: string }>("/api/home/gallery", "POST", formData);
+        uploaded.push(result.fileUrl);
       }
 
-      setForm((prev) =>
-        prev
-          ? {
-              ...prev,
-              gallery: [...(prev.gallery || []), ...uploaded],
-            }
-          : prev,
-      );
+      const nextForm = {
+        ...form,
+        gallery: [...(form.gallery || []), ...uploaded],
+      };
+      setForm(nextForm);
+      setSaved("Gallery image uploaded.");
     } catch (err) {
       setSaved(err instanceof Error ? err.message : "Image upload failed.");
     } finally {
@@ -115,16 +113,23 @@ export default function HomeAdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      setForm((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              gallery: prev.gallery.filter((_, i) => i !== index),
-                            }
-                          : prev,
-                      )
-                    }
+                    onClick={() => {
+                      if (!form) return;
+                      const imageUrl = form.gallery[index];
+                      const nextForm = {
+                        ...form,
+                        gallery: form.gallery.filter((_, i) => i !== index),
+                      };
+                      void (async () => {
+                        try {
+                          await apiSend(imageUrl, "DELETE");
+                          setForm(nextForm);
+                          setSaved("Gallery image deleted.");
+                        } catch (err) {
+                          setSaved(err instanceof Error ? err.message : "Delete failed.");
+                        }
+                      })();
+                    }}
                     className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -140,7 +145,7 @@ export default function HomeAdminPage() {
             )}
           </div>
 
-          <button onClick={save} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-leaf text-primary-foreground font-medium text-sm hover:shadow-[var(--shadow-glow)] transition shadow-[var(--shadow-card)]">
+          <button onClick={() => void save()} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-leaf text-primary-foreground font-medium text-sm hover:shadow-[var(--shadow-glow)] transition shadow-[var(--shadow-card)]">
             <Save className="h-4 w-4" /> Save Changes
           </button>
           {saved && <p className="text-xs text-white/55">{saved}</p>}
