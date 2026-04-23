@@ -1,53 +1,61 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Sparkles, Activity, ChevronDown, Code2 } from "lucide-react";
+import {
+  ArrowRight,
+  Sparkles,
+  Activity,
+  ChevronDown,
+  Code2,
+} from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaAws } from "react-icons/fa";
+import {
+  SiPython,
+  SiTensorflow,
+  SiPytorch,
+  SiOpencv,
+  SiFastapi,
+  SiReact,
+  SiTypescript,
+  SiPostgresql,
+  SiDocker,
+  SiGoogle,
+  SiFacebook,
+} from "react-icons/si";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { useApi } from "@/hooks/use-api";
 import type { DomainContentDTO, HomeContentDTO } from "@/types/content";
 
-const TECH_ICON_MAP: Record<string, string> = {
-  python: "python",
-  tensorflow: "tensorflow",
-  pytorch: "pytorch",
-  opencv: "opencv",
-  fastapi: "fastapi",
-  react: "react",
-  typescript: "typescript",
-  postgresql: "postgresql",
-  docker: "docker",
-  aws: "amazonaws",
-  "edge tpu": "google",
-  prophet: "meta",
+const TECH_ICON_MAP: Record<string, { icon: IconType; color: string }> = {
+  python: { icon: SiPython, color: "#3776AB" },
+  tensorflow: { icon: SiTensorflow, color: "#FF6F00" },
+  pytorch: { icon: SiPytorch, color: "#EE4C2C" },
+  opencv: { icon: SiOpencv, color: "#5C3EE8" },
+  fastapi: { icon: SiFastapi, color: "#009688" },
+  react: { icon: SiReact, color: "#61DAFB" },
+  typescript: { icon: SiTypescript, color: "#3178C6" },
+  postgresql: { icon: SiPostgresql, color: "#4169E1" },
+  docker: { icon: SiDocker, color: "#2496ED" },
+  aws: { icon: FaAws, color: "#FF9900" },
+  "edge tpu": { icon: SiGoogle, color: "#4285F4" },
+  prophet: { icon: SiFacebook, color: "#0866FF" },
 };
 
-function getTechIconUrl(name: string) {
+function getTechIcon(name: string) {
   const key = name.trim().toLowerCase();
-  const slug = TECH_ICON_MAP[key];
-  if (!slug) return "";
-  return `https://cdn.simpleicons.org/${slug}/14d2d6`;
+  return TECH_ICON_MAP[key] || { icon: Code2, color: "#14d2d6" };
 }
 
 function TechnologyTag({ name }: { name: string }) {
-  const [iconError, setIconError] = useState(false);
-  const iconUrl = getTechIconUrl(name);
+  const { icon: Icon, color } = getTechIcon(name);
 
   return (
-    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/12 border border-primary/20 text-xs text-white/90">
-      {!iconError && iconUrl ? (
-        <img
-          src={iconUrl}
-          alt={`${name} icon`}
-          className="h-3.5 w-3.5 object-contain"
-          onError={() => setIconError(true)}
-        />
-      ) : (
-        <Code2 className="h-3.5 w-3.5 text-primary" />
-      )}
-      <span>{name}</span>
+    <span className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-primary/12 border border-primary/20 text-sm text-white/90">
+      <Icon className="h-5 w-5" style={{ color }} />
+      <span className="text-[15px] leading-none">{name}</span>
     </span>
   );
 }
