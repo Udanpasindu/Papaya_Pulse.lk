@@ -121,7 +121,11 @@ export default function TeamAdminPage() {
                   alt={member.name} 
                   className="w-full h-full object-cover" 
                   onError={(e) => {
-                    (e.target as any).src = "/assets/team-1.jpg";
+                    const img = e.target as HTMLImageElement;
+                    if (!img.dataset.errorHandled) {
+                      img.dataset.errorHandled = "true";
+                      img.src = "/assets/team-1.jpg";
+                    }
                   }}
                 />
                 {uploading === memberId && (
