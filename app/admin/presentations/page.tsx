@@ -19,12 +19,19 @@ export default function PresentationsAdminPage() {
     try {
       setMessage("");
       setUploading(true);
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploaded = await apiSend<{ fileUrl: string }>("/api/upload", "POST", formData);
+
+      // Convert file to data URL for persistent storage
+      const fileBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(fileBuffer);
+      let binaryString = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binaryString += String.fromCharCode(bytes[i]);
+      }
+      const dataUrl = `data:${file.type};base64,${btoa(binaryString)}`;
+
       const created = await apiSend<PresentationDTO>("/api/presentations", "POST", {
         title: file.name,
-        fileUrl: uploaded.fileUrl,
+        fileUrl: dataUrl,
         type: "General",
         date: new Date().toISOString().slice(0, 10),
         slides: 0,
@@ -165,19 +172,36 @@ export default function PresentationsAdminPage() {
 
             {/* Content */}
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedFile.fileUrl && selectedFile.fileUrl.toLowerCase().endsWith(".pdf") ? (
-                <embed
+              {selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:application/pdf") ? (
+                <iframe
                   src={selectedFile.fileUrl}
-                  type="application/pdf"
                   width="100%"
                   height="100%"
-                  className="w-full h-full"
+                  className="w-full h-full border-none"
+                  title="PDF preview"
                 />
+              ) : selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:") ? (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Presentation className="h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-muted-foreground mb-4">Preview not available for this file type</p>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = selectedFile.fileUrl || "#";
+                      link.download = selectedFile.title || "presentation";
+                      link.click();
+                    }}
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download File
+                  </button>
+                </div>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                   <Presentation className="h-16 w-16 text-primary/40 mb-4" />
                   <p className="text-muted-foreground mb-4">
-                    {selectedFile.fileUrl ? "Unable to preview this file type" : "No file available"}
+                    {selectedFile.fileUrl ? "Unable to preview this file" : "No file available"}
                   </p>
                   {selectedFile.fileUrl && (
                     <a
@@ -202,14 +226,18 @@ export default function PresentationsAdminPage() {
                 Close
               </button>
               {selectedFile.fileUrl && (
-                <a
-                  href={selectedFile.fileUrl}
-                  download={selectedFile.title || "presentation"}
+                <button
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = selectedFile.fileUrl || "#";
+                    link.download = selectedFile.title || "presentation";
+                    link.click();
+                  }}
                   className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
                   Download
-                </a>
+                </button>
               )}
             </div>
           </div>

@@ -103,19 +103,36 @@ export default function PresentationsPage() {
 
             {/* Content */}
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedFile.fileUrl && selectedFile.fileUrl.toLowerCase().endsWith(".pdf") ? (
-                <embed
+              {selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:application/pdf") ? (
+                <iframe
                   src={selectedFile.fileUrl}
-                  type="application/pdf"
                   width="100%"
                   height="100%"
-                  className="w-full h-full"
+                  className="w-full h-full border-none"
+                  title="PDF preview"
                 />
+              ) : selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:") ? (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Presentation className="h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-muted-foreground mb-4">Preview not available for this file type</p>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = selectedFile.fileUrl || "#";
+                      link.download = selectedFile.title || "presentation";
+                      link.click();
+                    }}
+                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download File
+                  </button>
+                </div>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                   <Presentation className="h-16 w-16 text-primary/40 mb-4" />
                   <p className="text-muted-foreground mb-4">
-                    {selectedFile.fileUrl ? "Unable to preview this file type" : "No file available"}
+                    {selectedFile.fileUrl ? "Unable to preview this file" : "No file available"}
                   </p>
                   {selectedFile.fileUrl && (
                     <a
@@ -140,14 +157,18 @@ export default function PresentationsPage() {
                 Close
               </button>
               {selectedFile.fileUrl && (
-                <a
-                  href={selectedFile.fileUrl}
-                  download={selectedFile.title || "presentation"}
+                <button
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = selectedFile.fileUrl || "#";
+                    link.download = selectedFile.title || "presentation";
+                    link.click();
+                  }}
                   className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
                   Download
-                </a>
+                </button>
               )}
             </div>
           </div>
