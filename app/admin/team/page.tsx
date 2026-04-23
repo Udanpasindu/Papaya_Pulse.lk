@@ -10,21 +10,34 @@ export default function TeamAdminPage() {
   const { data, loading, error, setData } = useApi<TeamMemberDTO[]>("/api/team", "no-store");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState<string>("");
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string>("");
   const [failedImages, setFailedImages] = useState<Record<string, true>>({});
   const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   const team = data || [];
 
   const addMember = async () => {
     try {
+      setMessage("");
+      setCreating(true);
+      const stamp = Date.now();
       const created = await apiSend<TeamMemberDTO>("/api/team", "POST", {
         name: "New Member",
         role: "Role",
         image: "/assets/team-1.jpg",
-        email: "email@example.com",
+        email: `member-${stamp}@example.com`,
       });
-      setData([...(team || []), created]);
+      setData((prev) => [...(prev || []), created]);
+      setMessage("Team member added.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to add member.");
+      const text = err instanceof Error ? err.message : "Failed to add member.";
+      if (text.toLowerCase().includes("unauthorized")) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(text);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -32,23 +45,41 @@ export default function TeamAdminPage() {
     async (member: TeamMemberDTO) => {
       if (!member._id) return;
       try {
+        setMessage("");
         await apiSend(`/api/team/${member._id}`, "PUT", member);
         setMessage("Team member updated.");
       } catch (err) {
-        setMessage(err instanceof Error ? err.message : "Save failed.");
+        const text = err instanceof Error ? err.message : "Save failed.";
+        if (text.toLowerCase().includes("unauthorized")) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        setMessage(text);
       }
     },
     []
   );
 
   const removeMember = async (id: string | undefined) => {
-    if (!id) return;
+    if (!id) {
+      setMessage("Cannot delete: missing member ID.");
+      return;
+    }
     try {
+      setMessage("");
+      setDeletingId(id);
       await apiSend(`/api/team/${id}`, "DELETE");
-      setData(team.filter((m) => m._id !== id));
+      setData((prev) => (prev || []).filter((m) => m._id !== id));
       setMessage("Team member deleted.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Delete failed.");
+      const text = err instanceof Error ? err.message : "Delete failed.";
+      if (text.toLowerCase().includes("unauthorized")) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      setMessage(text);
+    } finally {
+      setDeletingId("");
     }
   };
 
@@ -74,7 +105,12 @@ export default function TeamAdminPage() {
         );
         setMessage("✓ Profile image updated successfully.");
       } catch (err) {
-        setMessage(err instanceof Error ? err.message : "Image upload failed.");
+        const text = err instanceof Error ? err.message : "Image upload failed.";
+        if (text.toLowerCase().includes("unauthorized")) {
+          window.location.href = "/admin/login";
+          return;
+        }
+        setMessage(text);
       } finally {
         setUploading("");
       }
@@ -97,8 +133,8 @@ export default function TeamAdminPage() {
           <div className="text-xs uppercase tracking-[0.2em] text-primary mb-2">Team</div>
           <h1 className="font-display font-bold text-3xl">Manage Team Members</h1>
         </div>
-        <button onClick={addMember} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass text-sm hover:bg-primary/15 hover:border-primary/30 transition">
-          <Plus className="h-4 w-4" /> Add
+        <button onClick={addMember} disabled={creating} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl glass text-sm hover:bg-primary/15 hover:border-primary/30 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <Plus className="h-4 w-4" /> {creating ? "Adding..." : "Add"}
         </button>
       </div>
 
@@ -174,7 +210,8 @@ export default function TeamAdminPage() {
               </div>
               <button 
                 onClick={() => removeMember(member._id)} 
-                className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center flex-shrink-0"
+                disabled={deletingId === member._id}
+                className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Delete member"
               >
                 <Trash2 className="h-3.5 w-3.5" />
