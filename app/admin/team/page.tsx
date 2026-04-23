@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 import { Trash2, Plus } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
@@ -117,10 +116,9 @@ export default function TeamAdminPage() {
                 className="relative h-20 w-20 rounded-xl overflow-hidden shrink-0 group hover:opacity-75 transition disabled:opacity-50"
                 title="Click to change profile picture"
               >
-                <Image 
+                <img 
                   src={member.image || "/assets/team-1.jpg"} 
                   alt={member.name} 
-                  fill 
                   className="w-full h-full object-cover" 
                   onError={(e) => {
                     (e.target as any).src = "/assets/team-1.jpg";
