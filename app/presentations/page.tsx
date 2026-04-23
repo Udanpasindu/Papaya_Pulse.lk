@@ -1,12 +1,14 @@
 "use client";
 
-import { Presentation, Download, Eye, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Presentation, Download, Eye, Calendar, X } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { useApi } from "@/hooks/use-api";
 import type { PresentationDTO } from "@/types/content";
 
 export default function PresentationsPage() {
   const { data, loading, error } = useApi<PresentationDTO[]>("/api/presentations");
+  const [selectedFile, setSelectedFile] = useState<PresentationDTO | null>(null);
 
   return (
     <PageShell
@@ -50,10 +52,19 @@ export default function PresentationsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <a href={p.fileUrl || "#"} target="_blank" className="h-10 w-10 rounded-lg border border-border bg-card hover:bg-muted/60 flex items-center justify-center transition">
+                  <button
+                    onClick={() => setSelectedFile(p)}
+                    className="h-10 w-10 rounded-lg border border-border bg-card hover:bg-muted/60 flex items-center justify-center transition"
+                    title="Preview presentation"
+                  >
                     <Eye className="h-4 w-4" />
-                  </a>
-                  <a href={p.fileUrl || "#"} target="_blank" className="h-10 w-10 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition">
+                  </button>
+                  <a
+                    href={p.fileUrl || "#"}
+                    download={p.title || "presentation"}
+                    className="h-10 w-10 rounded-lg bg-primary text-primary-foreground hover:opacity-90 flex items-center justify-center transition"
+                    title="Download presentation"
+                  >
                     <Download className="h-4 w-4" />
                   </a>
                 </div>
@@ -62,6 +73,86 @@ export default function PresentationsPage() {
           ))}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {selectedFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-card rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <div>
+                <h2 className="font-display font-bold text-xl">{selectedFile.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedFile.date
+                    ? new Date(selectedFile.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+                title="Close preview"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
+              {selectedFile.fileUrl && selectedFile.fileUrl.toLowerCase().endsWith(".pdf") ? (
+                <embed
+                  src={selectedFile.fileUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Presentation className="h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    {selectedFile.fileUrl ? "Unable to preview this file type" : "No file available"}
+                  </p>
+                  {selectedFile.fileUrl && (
+                    <a
+                      href={selectedFile.fileUrl}
+                      download={selectedFile.title || "presentation"}
+                      className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download File
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border/50 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition"
+              >
+                Close
+              </button>
+              {selectedFile.fileUrl && (
+                <a
+                  href={selectedFile.fileUrl}
+                  download={selectedFile.title || "presentation"}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageShell>
   );
 }

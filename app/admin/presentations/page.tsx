@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, Presentation, Trash2 } from "lucide-react";
+import { Upload, Presentation, Trash2, Eye, Download, X } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
 import { apiSend } from "@/lib/api";
 import type { PresentationDTO } from "@/types/content";
@@ -11,6 +11,7 @@ export default function PresentationsAdminPage() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<PresentationDTO | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const items = data || [];
 
@@ -100,19 +101,120 @@ export default function PresentationsAdminPage() {
                 <Presentation className="h-10 w-10 text-primary opacity-80" />
               </div>
             </div>
-            <div className="p-4 space-y-2">
-              <div className="w-full px-3 py-2 rounded-lg bg-input/50 border border-border text-sm font-medium">{p.title}</div>
+            <div className="p-4 space-y-3">
+              <div className="w-full px-3 py-2 rounded-lg bg-input/50 border border-border text-sm font-medium truncate">{p.title}</div>
               <div className="flex items-center justify-between gap-2">
                 <div className="px-3 py-2 rounded-lg bg-input/50 border border-border text-xs flex-1">{p.date || "-"}</div>
-                <button onClick={() => removeItem(p._id)} disabled={deletingId === p._id} className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setSelectedFile(p)}
+                    className="h-8 w-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center justify-center"
+                    title="Preview presentation"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                  <a
+                    href={p.fileUrl || "#"}
+                    download={p.title || "presentation"}
+                    className="h-8 w-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center justify-center"
+                    title="Download presentation"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    onClick={() => removeItem(p._id)}
+                    disabled={deletingId === p._id}
+                    className="h-8 w-8 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
       {message && <p className="text-xs text-muted-foreground">{message}</p>}
+
+      {/* Preview Modal */}
+      {selectedFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-4xl max-h-[90vh] flex flex-col bg-card rounded-2xl border border-border shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <div>
+                <h2 className="font-display font-bold text-xl">{selectedFile.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedFile.date
+                    ? new Date(selectedFile.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : ""}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+                title="Close preview"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
+              {selectedFile.fileUrl && selectedFile.fileUrl.toLowerCase().endsWith(".pdf") ? (
+                <embed
+                  src={selectedFile.fileUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Presentation className="h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    {selectedFile.fileUrl ? "Unable to preview this file type" : "No file available"}
+                  </p>
+                  {selectedFile.fileUrl && (
+                    <a
+                      href={selectedFile.fileUrl}
+                      download={selectedFile.title || "presentation"}
+                      className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download File
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border/50 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition"
+              >
+                Close
+              </button>
+              {selectedFile.fileUrl && (
+                <a
+                  href={selectedFile.fileUrl}
+                  download={selectedFile.title || "presentation"}
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition inline-flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
