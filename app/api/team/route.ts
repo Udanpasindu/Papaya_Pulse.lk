@@ -7,6 +7,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function normalizeUrl(value: unknown) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `https://${raw}`;
+}
+
 export async function GET() {
   try {
     await bootstrapData();
@@ -28,6 +35,8 @@ export async function POST(request: NextRequest) {
       role: String(body?.role || "").trim(),
       email: String(body?.email || "").trim().toLowerCase(),
       image: String(body?.image || "/assets/team-1.jpg").trim(),
+      linkedin: normalizeUrl(body?.linkedin),
+      github: normalizeUrl(body?.github),
     };
 
     if (!payload.name || !payload.role || !payload.email) {

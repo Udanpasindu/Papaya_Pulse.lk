@@ -6,6 +6,8 @@ const teamMemberSchema = new Schema(
     role: { type: String, required: true },
     image: { type: String, default: "" },
     email: { type: String, required: true },
+    linkedin: { type: String, default: "" },
+    github: { type: String, default: "" },
   },
   { timestamps: true },
 );

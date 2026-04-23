@@ -72,6 +72,8 @@ export interface TeamMemberDTO {
   role: string;
   image: string;
   email: string;
+  linkedin?: string;
+  github?: string;
 }
 
 export interface ContactMessageDTO {

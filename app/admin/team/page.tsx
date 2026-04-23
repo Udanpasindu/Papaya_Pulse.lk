@@ -16,6 +16,24 @@ export default function TeamAdminPage() {
   const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   const team = data || [];
 
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+
+  const updateMemberField = useCallback(
+    (memberId: string | undefined, key: keyof TeamMemberDTO, value: string) => {
+      if (!memberId) return;
+      setData((prev) =>
+        (prev || []).map((m) => (m._id === memberId ? { ...m, [key]: value } : m))
+      );
+    },
+    [setData]
+  );
+
   const addMember = async () => {
     try {
       setMessage("");
@@ -26,6 +44,8 @@ export default function TeamAdminPage() {
         role: "Role",
         image: "/assets/team-1.jpg",
         email: `member-${stamp}@example.com`,
+        linkedin: "",
+        github: "",
       });
       setData((prev) => [...(prev || []), created]);
       setMessage("Team member added.");
@@ -93,16 +113,31 @@ export default function TeamAdminPage() {
       try {
         setMessage("");
         setUploading(member._id);
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploaded = await apiSend<{ fileUrl: string }>("/api/upload", "POST", formData);
-        const updated = { ...member, image: uploaded.fileUrl };
+
+        if (!file.type.startsWith("image/")) {
+          throw new Error("Please upload a valid image file.");
+        }
+        if (file.size > 2 * 1024 * 1024) {
+          throw new Error("Image too large. Please upload an image under 2MB.");
+        }
+
+        const imageDataUrl = await fileToDataUrl(file);
+        const updated = { ...member, image: imageDataUrl };
         await saveMember(updated);
-        
-        // Update immediately in state
+
         setData((prevData) =>
           prevData?.map((m) => (m._id === member._id ? updated : m)) || []
         );
+
+        if (member.image && member.image !== "/assets/team-1.jpg") {
+          setFailedImages((prev) => {
+            if (!prev[member.image]) return prev;
+            const next = { ...prev };
+            delete next[member.image];
+            return next;
+          });
+        }
+
         setMessage("✓ Profile image updated successfully.");
       } catch (err) {
         const text = err instanceof Error ? err.message : "Image upload failed.";
@@ -188,24 +223,38 @@ export default function TeamAdminPage() {
               <div className="flex-1 min-w-0 space-y-2">
                 <input
                   value={member.name}
-                  onChange={(e) => setData(team.map((m) => (m._id === member._id ? { ...m, name: e.target.value } : m)))}
+                  onChange={(e) => updateMemberField(member._id, "name", e.target.value)}
                   onBlur={(e) => saveMember({ ...member, name: e.currentTarget.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-sm font-medium"
                   placeholder="Name"
                 />
                 <input
                   value={member.role}
-                  onChange={(e) => setData(team.map((m) => (m._id === member._id ? { ...m, role: e.target.value } : m)))}
+                  onChange={(e) => updateMemberField(member._id, "role", e.target.value)}
                   onBlur={(e) => saveMember({ ...member, role: e.currentTarget.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs text-muted-foreground"
                   placeholder="Role"
                 />
                 <input
                   value={member.email}
-                  onChange={(e) => setData(team.map((m) => (m._id === member._id ? { ...m, email: e.target.value } : m)))}
+                  onChange={(e) => updateMemberField(member._id, "email", e.target.value)}
                   onBlur={(e) => saveMember({ ...member, email: e.currentTarget.value })}
                   className="w-full px-3 py-1.5 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs font-mono"
                   placeholder="Email"
+                />
+                <input
+                  value={member.linkedin || ""}
+                  onChange={(e) => updateMemberField(member._id, "linkedin", e.target.value)}
+                  onBlur={(e) => saveMember({ ...member, linkedin: e.currentTarget.value })}
+                  className="w-full px-3 py-1.5 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                  placeholder="LinkedIn URL"
+                />
+                <input
+                  value={member.github || ""}
+                  onChange={(e) => updateMemberField(member._id, "github", e.target.value)}
+                  onBlur={(e) => saveMember({ ...member, github: e.currentTarget.value })}
+                  className="w-full px-3 py-1.5 rounded-lg bg-input/50 border border-border focus:border-primary/40 focus:outline-none text-xs"
+                  placeholder="GitHub URL"
                 />
               </div>
               <button 

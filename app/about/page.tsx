@@ -49,12 +49,16 @@ function PersonCard({
   role,
   email,
   image,
+  linkedin,
+  github,
   large = false,
 }: {
   name: string;
   role: string;
   email: string;
   image: string;
+  linkedin?: string;
+  github?: string;
   large?: boolean;
 }) {
   return (
@@ -70,12 +74,28 @@ function PersonCard({
           <a href={`mailto:${email}`} className="h-9 w-9 rounded-lg glass flex items-center justify-center hover:bg-primary/15 hover:border-primary/30 transition" aria-label={`Email ${name}`}>
             <Mail className="h-4 w-4" />
           </a>
-          <a href="#" className="h-9 w-9 rounded-lg glass flex items-center justify-center hover:bg-primary/15 hover:border-primary/30 transition">
-            <Linkedin className="h-4 w-4" />
-          </a>
-          <a href="#" className="h-9 w-9 rounded-lg glass flex items-center justify-center hover:bg-primary/15 hover:border-primary/30 transition">
-            <Github className="h-4 w-4" />
-          </a>
+          {linkedin && (
+            <a
+              href={linkedin}
+              target="_blank"
+              rel="noreferrer"
+              className="h-9 w-9 rounded-lg glass flex items-center justify-center hover:bg-primary/15 hover:border-primary/30 transition"
+              aria-label={`${name} LinkedIn`}
+            >
+              <Linkedin className="h-4 w-4" />
+            </a>
+          )}
+          {github && (
+            <a
+              href={github}
+              target="_blank"
+              rel="noreferrer"
+              className="h-9 w-9 rounded-lg glass flex items-center justify-center hover:bg-primary/15 hover:border-primary/30 transition"
+              aria-label={`${name} GitHub`}
+            >
+              <Github className="h-4 w-4" />
+            </a>
+          )}
         </div>
       </div>
     </div>

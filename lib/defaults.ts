@@ -174,10 +174,10 @@ export const DEFAULT_PRESENTATIONS: PresentationDTO[] = [
 ];
 
 export const DEFAULT_TEAM: TeamMemberDTO[] = [
-  { name: "Dilshan Perera", role: "Quality Grading Lead", email: "dilshan@papayapulse.lk", image: "/assets/team-1.jpg" },
-  { name: "Sanduni Fernando", role: "Growth Prediction Lead", email: "sanduni@papayapulse.lk", image: "/assets/team-2.jpg" },
-  { name: "Kavindu Jayasekara", role: "Disease Detection Lead", email: "kavindu@papayapulse.lk", image: "/assets/team-3.jpg" },
-  { name: "Nimesha Silva", role: "Market Forecasting Lead", email: "nimesha@papayapulse.lk", image: "/assets/team-4.jpg" },
-  { name: "Dr. Ranjith Bandara", role: "Principal Supervisor", email: "r.bandara@university.edu", image: "/assets/supervisor-1.jpg" },
-  { name: "Dr. Anushka Wijesinghe", role: "Co-Supervisor", email: "a.wije@university.edu", image: "/assets/supervisor-2.jpg" },
+  { name: "Dilshan Perera", role: "Quality Grading Lead", email: "dilshan@papayapulse.lk", image: "/assets/team-1.jpg", linkedin: "", github: "" },
+  { name: "Sanduni Fernando", role: "Growth Prediction Lead", email: "sanduni@papayapulse.lk", image: "/assets/team-2.jpg", linkedin: "", github: "" },
+  { name: "Kavindu Jayasekara", role: "Disease Detection Lead", email: "kavindu@papayapulse.lk", image: "/assets/team-3.jpg", linkedin: "", github: "" },
+  { name: "Nimesha Silva", role: "Market Forecasting Lead", email: "nimesha@papayapulse.lk", image: "/assets/team-4.jpg", linkedin: "", github: "" },
+  { name: "Dr. Ranjith Bandara", role: "Principal Supervisor", email: "r.bandara@university.edu", image: "/assets/supervisor-1.jpg", linkedin: "", github: "" },
+  { name: "Dr. Anushka Wijesinghe", role: "Co-Supervisor", email: "a.wije@university.edu", image: "/assets/supervisor-2.jpg", linkedin: "", github: "" },
 ];
