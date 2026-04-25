@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
+import mongoose from "mongoose";
 import { Types } from "mongoose";
+import { Readable } from "stream";
+import { GridFSBucket } from "mongodb";
 import { bootstrapData } from "@/lib/bootstrap";
 import { PresentationModel } from "@/lib/models/Presentation";
 import { fail } from "@/lib/api-helpers";
@@ -27,16 +30,35 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     }
 
     const item = (await PresentationModel.findById(params.id)
-      .select("title mimeType fileData fileUrl")
+      .select("title mimeType fileData fileUrl fileId")
       .lean()) as {
       title?: string;
       mimeType?: string;
       fileData?: unknown;
       fileUrl?: string;
+      fileId?: unknown;
     } | null;
 
     if (!item) {
       return fail("Presentation not found.", 404);
+    }
+
+    const filename = encodeURIComponent(String(item.title || "presentation"));
+
+    if (item.fileId && mongoose.connection.db) {
+      const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "presentations" });
+      const fileId = Types.ObjectId.isValid(String(item.fileId)) ? new Types.ObjectId(String(item.fileId)) : null;
+      if (fileId) {
+        const downloadStream = bucket.openDownloadStream(fileId);
+        return new Response(Readable.toWeb(downloadStream) as unknown as BodyInit, {
+          status: 200,
+          headers: {
+            "Content-Type": String(item.mimeType || "application/octet-stream"),
+            "Content-Disposition": `inline; filename="${filename}"`,
+            "Cache-Control": "no-store",
+          },
+        });
+      }
     }
 
     if (item.fileData) {

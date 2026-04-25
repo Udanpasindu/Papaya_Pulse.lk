@@ -6,6 +6,8 @@ import { useApi } from "@/hooks/use-api";
 import { apiSend } from "@/lib/api";
 import type { PresentationDTO } from "@/types/content";
 
+const CHUNK_SIZE = 256 * 1024;
+
 export default function PresentationsAdminPage() {
   const { data, loading, error, setData } = useApi<PresentationDTO[]>("/api/presentations", "no-store");
   const [message, setMessage] = useState("");
@@ -27,14 +29,49 @@ export default function PresentationsAdminPage() {
       setMessage("");
       setUploading(true);
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", file.name);
-      formData.append("type", "General");
-      formData.append("date", new Date().toISOString().slice(0, 10));
-      formData.append("slides", "0");
+      const uploadId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
 
-      const created = await apiSend<PresentationDTO>("/api/presentations", "POST", formData);
+      for (let index = 0; index < totalChunks; index += 1) {
+        const start = index * CHUNK_SIZE;
+        const end = Math.min(file.size, start + CHUNK_SIZE);
+        const chunk = file.slice(start, end);
+        const formData = new FormData();
+        formData.append("uploadId", uploadId);
+        formData.append("index", String(index));
+        formData.append("totalChunks", String(totalChunks));
+        formData.append("title", file.name);
+        formData.append("type", "General");
+        formData.append("date", new Date().toISOString().slice(0, 10));
+        formData.append("slides", "0");
+        formData.append("originalName", file.name);
+        formData.append("mimeType", file.type || "application/octet-stream");
+        formData.append("chunk", chunk, file.name);
+
+        const res = await fetch("/api/presentations/upload/chunk", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        const raw = await res.text();
+        let json: { success?: boolean; message?: string } | null = null;
+        if (raw) {
+          try {
+            json = JSON.parse(raw) as { success?: boolean; message?: string };
+          } catch {
+            json = null;
+          }
+        }
+
+        if (!res.ok || !json?.success) {
+          throw new Error(json?.message || `Upload chunk failed (${res.status}).`);
+        }
+
+        setMessage(`Uploading ${file.name}... ${index + 1}/${totalChunks}`);
+      }
+
+      const created = await apiSend<PresentationDTO>("/api/presentations/upload/complete", "POST", { uploadId });
       setData((prev) => [created, ...(prev || [])]);
       setMessage("Presentation uploaded.");
     } catch (err) {
