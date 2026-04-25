@@ -110,7 +110,8 @@ function Hero() {
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              to="/milestones"
+              to="/"
+              hash="core-modules"
               className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl glass-strong text-foreground font-medium hover:bg-white/10 transition"
             >
               <Activity className="h-4 w-4" />
@@ -160,7 +161,7 @@ function Stats() {
 
 function Features() {
   return (
-    <section className="relative py-16 sm:py-28">
+    <section id="core-modules" className="relative py-16 sm:py-28 scroll-mt-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="max-w-3xl mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs uppercase tracking-[0.18em] text-primary mb-4">
