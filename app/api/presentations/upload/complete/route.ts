@@ -9,6 +9,16 @@ import { fail, ok, requireAuth } from "@/lib/api-helpers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function normalizeBinary(input: unknown) {
+  if (!input) return null;
+  if (input instanceof Uint8Array) return input;
+  const maybeBinary = input as { buffer?: ArrayLike<number> };
+  if (maybeBinary.buffer) {
+    return Uint8Array.from(maybeBinary.buffer);
+  }
+  return Uint8Array.from(Buffer.from(input as Buffer));
+}
+
 function withResolvedFileUrl(doc: Record<string, unknown>) {
   return {
     ...doc,
@@ -23,14 +33,22 @@ async function writeChunksToGridFs(uploadId: string, title: string, mimeType: st
   }
 
   const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "presentations" });
-  const chunks = await PresentationUploadChunkModel.find({ uploadId }).sort({ index: 1 }).lean();
+  const chunks = await PresentationUploadChunkModel.find({ uploadId }).sort({ index: 1 });
 
   if (!chunks.length) {
     throw new Error("Upload chunks not found.");
   }
 
-  const uploadStream = bucket.openUploadStream(title, { contentType: mimeType });
-  const buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk.chunkData as Buffer)));
+  const chunkBuffers = chunks.map((chunk) => {
+    const bytes = normalizeBinary(chunk.chunkData);
+    if (!bytes) {
+      throw new Error("Upload chunk data is invalid.");
+    }
+    return Buffer.from(bytes);
+  });
+
+  const uploadStream = bucket.openUploadStream(title, { contentType: mimeType || "application/octet-stream" });
+  const buffer = Buffer.concat(chunkBuffers);
   await new Promise<void>((resolve, reject) => {
     uploadStream.once("error", reject);
     uploadStream.once("finish", () => resolve());
@@ -53,12 +71,12 @@ export async function POST(request: NextRequest) {
       return fail("Missing upload ID.", 400);
     }
 
-    const chunks = await PresentationUploadChunkModel.find({ uploadId }).sort({ index: 1 }).lean();
+    const chunks = await PresentationUploadChunkModel.find({ uploadId }).sort({ index: 1 });
     if (!chunks.length) {
       return fail("Upload not found.", 404);
     }
 
-    const totalChunks = chunks[0]?.totalChunks || 0;
+    const totalChunks = Number(chunks[0]?.totalChunks || 0);
     if (chunks.length !== totalChunks) {
       return fail("Upload is incomplete.", 400);
     }

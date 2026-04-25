@@ -6,6 +6,15 @@ import { fail, ok, requireAuth } from "@/lib/api-helpers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function normalizeMimeType(mimeType: string, title: string) {
+  const normalized = String(mimeType || "").trim();
+  if (normalized) return normalized;
+  if (String(title || "").toLowerCase().endsWith(".pdf")) {
+    return "application/pdf";
+  }
+  return "application/octet-stream";
+}
+
 export async function POST(request: NextRequest) {
   try {
     requireAuth();
@@ -20,7 +29,7 @@ export async function POST(request: NextRequest) {
     const date = String(formData.get("date") || "").trim();
     const slides = Number(formData.get("slides") || 0);
     const originalName = String(formData.get("originalName") || title || "presentation").trim();
-    const mimeType = String(formData.get("mimeType") || "application/octet-stream").trim();
+    const mimeType = normalizeMimeType(String(formData.get("mimeType") || "").trim(), title);
     const chunk = formData.get("chunk") as File | null;
 
     if (!uploadId || !Number.isFinite(index) || !Number.isFinite(totalChunks) || !title || !chunk) {
