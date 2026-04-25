@@ -8,12 +8,17 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 function withResolvedFileUrl(doc: Record<string, unknown>) {
-  const hasBinary = Boolean(doc.hasBinary);
+  const hasBinary = Boolean(doc.hasBinary) || Boolean(doc.fileData) || Boolean(doc.fileId);
   return {
     ...doc,
     fileUrl: hasBinary && doc._id ? `/api/documents/file/${String(doc._id)}` : String(doc.fileUrl || ""),
     fileData: undefined,
   };
+}
+
+function hasUsableDocumentFile(doc: Record<string, unknown>) {
+  const directUrl = String(doc.fileUrl || "").trim();
+  return Boolean(doc.hasBinary) || Boolean(doc.fileData) || Boolean(doc.fileId) || directUrl.length > 0;
 }
 
 export async function GET(request: NextRequest) {
@@ -30,10 +35,15 @@ export async function GET(request: NextRequest) {
       : {};
 
     const items = await DocumentModel.find(filter)
-      .select("title fileUrl hasBinary mimeType category size date createdAt")
+      .select("title fileUrl hasBinary fileData mimeType category size date createdAt")
       .sort({ createdAt: -1 })
       .lean();
-    return okWithHeaders(items.map((item) => withResolvedFileUrl(item as Record<string, unknown>)), 200, { "Cache-Control": "no-store" });
+
+    const filtered = items
+      .filter((item) => hasUsableDocumentFile(item as Record<string, unknown>))
+      .map((item) => withResolvedFileUrl(item as Record<string, unknown>));
+
+    return okWithHeaders(filtered, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch documents.", 500);
   }

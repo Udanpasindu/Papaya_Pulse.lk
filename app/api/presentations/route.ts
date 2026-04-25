@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 function withResolvedFileUrl(doc: Record<string, unknown>) {
-  const hasBinary = Boolean(doc.hasBinary);
+  const hasBinary = Boolean(doc.hasBinary) || Boolean(doc.fileData) || Boolean(doc.fileId);
   return {
     ...doc,
     fileUrl: hasBinary && doc._id ? `/api/presentations/file/${String(doc._id)}` : String(doc.fileUrl || ""),
@@ -16,14 +16,24 @@ function withResolvedFileUrl(doc: Record<string, unknown>) {
   };
 }
 
+function hasUsablePresentationFile(doc: Record<string, unknown>) {
+  const directUrl = String(doc.fileUrl || "").trim();
+  return Boolean(doc.hasBinary) || Boolean(doc.fileData) || Boolean(doc.fileId) || directUrl.length > 0;
+}
+
 export async function GET() {
   try {
     await bootstrapData();
     const items = await PresentationModel.find()
-      .select("title fileUrl hasBinary mimeType type date slides")
-      .sort({ date: 1 })
+      .select("title fileUrl hasBinary fileId fileData mimeType type date slides createdAt")
+      .sort({ createdAt: -1 })
       .lean();
-    return okWithHeaders(items.map((item) => withResolvedFileUrl(item as Record<string, unknown>)), 200, { "Cache-Control": "no-store" });
+
+    const filtered = items
+      .filter((item) => hasUsablePresentationFile(item as Record<string, unknown>))
+      .map((item) => withResolvedFileUrl(item as Record<string, unknown>));
+
+    return okWithHeaders(filtered, 200, { "Cache-Control": "no-store" });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch presentations.", 500);
   }

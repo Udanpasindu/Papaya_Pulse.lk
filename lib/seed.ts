@@ -11,6 +11,7 @@ import { TeamMemberModel } from "@/lib/models/TeamMember";
 export async function seedIfNeeded() {
   const adminEmail = process.env.ADMIN_EMAIL || "admin@papayapulse.com";
   const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+  const shouldSeedSampleCollections = process.env.NODE_ENV !== "production";
 
   const [existingUser, homeCount, domainCount, milestoneCount, documentCount, presentationCount, teamCount] =
     await Promise.all([
@@ -31,10 +32,10 @@ export async function seedIfNeeded() {
 
   if (!homeCount) seedOperations.push(HomeContentModel.create(DEFAULT_HOME));
   if (!domainCount) seedOperations.push(DomainContentModel.create(DEFAULT_DOMAIN));
-  if (!milestoneCount) seedOperations.push(MilestoneModel.insertMany(DEFAULT_MILESTONES));
-  if (!documentCount) seedOperations.push(DocumentModel.insertMany(DEFAULT_DOCUMENTS));
-  if (!presentationCount) seedOperations.push(PresentationModel.insertMany(DEFAULT_PRESENTATIONS));
-  if (!teamCount) seedOperations.push(TeamMemberModel.insertMany(DEFAULT_TEAM));
+  if (shouldSeedSampleCollections && !milestoneCount) seedOperations.push(MilestoneModel.insertMany(DEFAULT_MILESTONES));
+  if (shouldSeedSampleCollections && !documentCount) seedOperations.push(DocumentModel.insertMany(DEFAULT_DOCUMENTS));
+  if (shouldSeedSampleCollections && !presentationCount) seedOperations.push(PresentationModel.insertMany(DEFAULT_PRESENTATIONS));
+  if (shouldSeedSampleCollections && !teamCount) seedOperations.push(TeamMemberModel.insertMany(DEFAULT_TEAM));
 
   if (seedOperations.length > 0) {
     await Promise.all(seedOperations);
