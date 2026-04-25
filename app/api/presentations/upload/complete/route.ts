@@ -23,20 +23,18 @@ async function writeChunksToGridFs(uploadId: string, title: string, mimeType: st
   }
 
   const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "presentations" });
-  const uploadStream = bucket.openUploadStream(title, { contentType: mimeType });
   const chunks = await PresentationUploadChunkModel.find({ uploadId }).sort({ index: 1 }).lean();
 
   if (!chunks.length) {
     throw new Error("Upload chunks not found.");
   }
 
-  for (const chunk of chunks) {
-    uploadStream.write(Buffer.from(chunk.chunkData as Buffer));
-  }
-
+  const uploadStream = bucket.openUploadStream(title, { contentType: mimeType });
+  const buffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk.chunkData as Buffer)));
   await new Promise<void>((resolve, reject) => {
     uploadStream.once("error", reject);
-    uploadStream.end(() => resolve());
+    uploadStream.once("finish", () => resolve());
+    uploadStream.end(buffer);
   });
 
   await PresentationUploadChunkModel.deleteMany({ uploadId });
