@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle2 } from "lucide-react";
+import { Send, CheckCircle2 } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { apiSend } from "@/lib/api";
 
@@ -41,16 +41,8 @@ export default function ContactPage() {
       description="Questions, collaborations or feedback - we'd love to hear from you."
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-20">
-        <div className="grid lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-3xl p-6 space-y-4 border border-border bg-card shadow-[var(--shadow-card)]">
-              <ContactRow icon={Mail} label="Email" value="hello@papayapulse.lk" href="mailto:hello@papayapulse.lk" />
-              <ContactRow icon={Phone} label="Phone" value="+94 71 234 5678" href="tel:+94712345678" />
-              <ContactRow icon={MapPin} label="Location" value="Colombo, Sri Lanka" />
-            </div>
-          </div>
-
-          <form onSubmit={submit} className="lg:col-span-3 rounded-3xl p-6 sm:p-8 space-y-4 border border-border bg-card shadow-[var(--shadow-card)]">
+        <div className="mx-auto max-w-3xl">
+          <form onSubmit={submit} className="rounded-3xl p-6 sm:p-8 space-y-4 border border-border bg-card shadow-[var(--shadow-card)]">
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Your name" />
               <Field label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} placeholder="you@example.com" />
@@ -86,31 +78,6 @@ export default function ContactPage() {
         </div>
       </div>
     </PageShell>
-  );
-}
-
-function ContactRow({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  href?: string;
-}) {
-  const Wrapper: React.ElementType = href ? "a" : "div";
-  return (
-    <Wrapper href={href} className="flex items-center gap-4 group">
-      <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition">
-        <Icon className="h-5 w-5 text-primary" />
-      </div>
-      <div>
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-        <div className="text-sm font-medium">{value}</div>
-      </div>
-    </Wrapper>
   );
 }
 
