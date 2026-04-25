@@ -6,7 +6,8 @@ import { useApi } from "@/hooks/use-api";
 import { apiSend } from "@/lib/api";
 import type { PresentationDTO } from "@/types/content";
 
-const CHUNK_SIZE = 256 * 1024;
+const CHUNK_SIZE = 2 * 1024 * 1024;
+const CHUNK_CONCURRENCY = 3;
 
 export default function PresentationsAdminPage() {
   const { data, loading, error, setData } = useApi<PresentationDTO[]>("/api/presentations", "no-store");
@@ -31,8 +32,7 @@ export default function PresentationsAdminPage() {
 
       const uploadId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
-
-      for (let index = 0; index < totalChunks; index += 1) {
+      const sendChunk = async (index: number) => {
         const start = index * CHUNK_SIZE;
         const end = Math.min(file.size, start + CHUNK_SIZE);
         const chunk = file.slice(start, end);
@@ -67,8 +67,12 @@ export default function PresentationsAdminPage() {
         if (!res.ok || !json?.success) {
           throw new Error(json?.message || `Upload chunk failed (${res.status}).`);
         }
+      };
 
-        setMessage(`Uploading ${file.name}... ${index + 1}/${totalChunks}`);
+      for (let startIndex = 0; startIndex < totalChunks; startIndex += CHUNK_CONCURRENCY) {
+        const batch = Array.from({ length: Math.min(CHUNK_CONCURRENCY, totalChunks - startIndex) }, (_, offset) => startIndex + offset);
+        await Promise.all(batch.map((index) => sendChunk(index)));
+        setMessage(`Uploading ${file.name}... ${Math.min(startIndex + batch.length, totalChunks)}/${totalChunks}`);
       }
 
       const created = await apiSend<PresentationDTO>("/api/presentations/upload/complete", "POST", { uploadId });
