@@ -11,6 +11,7 @@ import {
   FileText,
   Presentation,
   Users,
+  Mail,
   LogOut,
   Leaf,
   Menu,
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/admin/milestones", label: "Milestones", icon: Calendar },
   { to: "/admin/documents", label: "Documents", icon: FileText },
   { to: "/admin/presentations", label: "Presentations", icon: Presentation },
+  { to: "/admin/contact", label: "Contact Messages", icon: Mail },
   { to: "/admin/team", label: "Team", icon: Users },
 ];
 

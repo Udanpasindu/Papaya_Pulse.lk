@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Calendar, Users, Presentation, TrendingUp, CheckCircle2 } from "lucide-react";
+import { FileText, Calendar, Users, Presentation, TrendingUp, CheckCircle2, Mail } from "lucide-react";
 import { useApi } from "@/hooks/use-api";
-import type { MilestoneDTO } from "@/types/content";
+import type { ContactMessageDTO, MilestoneDTO } from "@/types/content";
 
 type AdminSummary = {
   milestones: MilestoneDTO[];
   documents: number;
   presentations: number;
   team: number;
+  contacts: number;
 };
 
 export default function AdminDashboard() {
   const { data: summary } = useApi<AdminSummary>("/api/admin/summary", "no-store");
+  const { data: recentMessages } = useApi<ContactMessageDTO[]>("/api/contact?limit=5", "no-store");
 
   const milestones = summary?.milestones || [];
   const completedMilestones = milestones.filter((m) => m.status === "completed").length;
@@ -23,6 +25,7 @@ export default function AdminDashboard() {
     { label: "Documents", value: summary?.documents || 0, icon: FileText, accent: "text-secondary" },
     { label: "Presentations", value: summary?.presentations || 0, icon: Presentation, accent: "text-leaf" },
     { label: "Team Members", value: summary?.team || 0, icon: Users, accent: "text-pulp" },
+    { label: "Contact Messages", value: summary?.contacts || 0, icon: Mail, accent: "text-primary" },
   ];
 
   return (
@@ -33,7 +36,7 @@ export default function AdminDashboard() {
         <p className="text-sm text-white/65 mt-2">Here is what is happening with PapayaPulse today.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="glass rounded-2xl p-5 hover-lift border border-white/8">
             <div className="flex items-center justify-between mb-3">
@@ -70,6 +73,35 @@ export default function AdminDashboard() {
           <Link href="/admin/milestones" className="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-white hover:bg-white/[0.06] transition">
             Milestones
           </Link>
+          <Link href="/admin/contact" className="rounded-xl border border-white/15 bg-white/[0.03] px-4 py-3 text-sm text-white hover:bg-white/[0.06] transition">
+            Contact Messages
+          </Link>
+        </div>
+      </div>
+
+      <div className="glass rounded-2xl p-6 border border-white/8">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-display font-bold text-lg text-white">Recent Contact Messages</h2>
+          <Link href="/admin/contact" className="text-xs text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {(recentMessages || []).length === 0 && <div className="text-sm text-white/55">No new contact messages.</div>}
+          {(recentMessages || []).map((message) => (
+            <div key={message._id || `${message.email}-${message.name}`} className="p-3 rounded-xl bg-white/[0.03] border border-white/8">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{message.name}</p>
+                  <p className="text-xs text-white/60 truncate">{message.email}</p>
+                </div>
+                <span className="text-xs text-white/45 shrink-0">
+                  {message.createdAt ? new Date(message.createdAt).toLocaleDateString() : "-"}
+                </span>
+              </div>
+              <p className="text-xs text-white/70 mt-2 line-clamp-2 whitespace-pre-wrap">{message.message}</p>
+            </div>
+          ))}
         </div>
       </div>
 
