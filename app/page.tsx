@@ -215,10 +215,7 @@ function ResearchFlow({ domain }: { domain: DomainContentDTO | null }) {
     { title: "Literature Survey", value: (domain?.literature || []).join(" "), type: "paragraph" as const },
     { title: "Research Gap", value: (domain?.researchGap || []).join(" "), type: "paragraph" as const },
     { title: "Research Problem", value: domain?.problem || "", type: "text" as const },
-    { title: "Proposed Solution", value: domain?.proposedSolution || "", type: "text" as const },
     { title: "Research Objectives", value: domain?.objectives || [], type: "chips" as const },
-    { title: "Research Approach", value: domain?.researchApproach || "", type: "text" as const },
-    { title: "System Architecture", value: domain?.systemArchitecture || "", type: "text" as const },
     { title: "Methodology", value: domain?.methodology || [], type: "timeline" as const },
     { title: "Technologies Used", value: domain?.technologies || [], type: "tags" as const },
   ];

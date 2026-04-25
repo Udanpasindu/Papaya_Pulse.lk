@@ -91,33 +91,6 @@ export default function DomainAdminPage() {
         />
       </Section>
 
-      <Section title="Proposed Solution">
-        <textarea
-          value={form.proposedSolution}
-          onChange={(e) => setForm({ ...form, proposedSolution: e.target.value })}
-          rows={4}
-          className="w-full px-4 py-3 rounded-xl bg-input/50 border border-white/10 focus:border-primary/40 focus:ring-2 focus:ring-primary/30 focus:outline-none transition resize-none text-sm text-white"
-        />
-      </Section>
-
-      <Section title="Research Approach">
-        <textarea
-          value={form.researchApproach}
-          onChange={(e) => setForm({ ...form, researchApproach: e.target.value })}
-          rows={4}
-          className="w-full px-4 py-3 rounded-xl bg-input/50 border border-white/10 focus:border-primary/40 focus:ring-2 focus:ring-primary/30 focus:outline-none transition resize-none text-sm text-white"
-        />
-      </Section>
-
-      <Section title="System Architecture">
-        <textarea
-          value={form.systemArchitecture}
-          onChange={(e) => setForm({ ...form, systemArchitecture: e.target.value })}
-          rows={4}
-          className="w-full px-4 py-3 rounded-xl bg-input/50 border border-white/10 focus:border-primary/40 focus:ring-2 focus:ring-primary/30 focus:outline-none transition resize-none text-sm text-white"
-        />
-      </Section>
-
       <Section title="Objectives">
         <div className="space-y-2">
           {form.objectives.map((objective, index) => (
