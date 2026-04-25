@@ -62,6 +62,7 @@ export interface PresentationDTO {
   _id?: string;
   title: string;
   fileUrl: string;
+  mimeType?: string;
   type: string;
   date?: string;
   slides?: number;

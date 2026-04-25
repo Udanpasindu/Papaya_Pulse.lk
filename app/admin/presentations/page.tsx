@@ -15,27 +15,26 @@ export default function PresentationsAdminPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const items = data || [];
 
+  const canPreviewPdf = (item: PresentationDTO) => {
+    const mime = String(item.mimeType || "").toLowerCase();
+    const title = String(item.title || "").toLowerCase();
+    const url = String(item.fileUrl || "").toLowerCase();
+    return mime.includes("pdf") || title.endsWith(".pdf") || url.startsWith("data:application/pdf") || url.includes("/api/presentations/file/");
+  };
+
   const uploadPresentation = async (file: File) => {
     try {
       setMessage("");
       setUploading(true);
 
-      // Convert file to data URL for persistent storage
-      const fileBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(fileBuffer);
-      let binaryString = "";
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binaryString += String.fromCharCode(bytes[i]);
-      }
-      const dataUrl = `data:${file.type};base64,${btoa(binaryString)}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", file.name);
+      formData.append("type", "General");
+      formData.append("date", new Date().toISOString().slice(0, 10));
+      formData.append("slides", "0");
 
-      const created = await apiSend<PresentationDTO>("/api/presentations", "POST", {
-        title: file.name,
-        fileUrl: dataUrl,
-        type: "General",
-        date: new Date().toISOString().slice(0, 10),
-        slides: 0,
-      });
+      const created = await apiSend<PresentationDTO>("/api/presentations", "POST", formData);
       setData((prev) => [created, ...(prev || [])]);
       setMessage("Presentation uploaded.");
     } catch (err) {
@@ -172,7 +171,7 @@ export default function PresentationsAdminPage() {
 
             {/* Content */}
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:application/pdf") ? (
+              {canPreviewPdf(selectedFile) ? (
                 <iframe
                   src={selectedFile.fileUrl}
                   width="100%"
@@ -180,7 +179,7 @@ export default function PresentationsAdminPage() {
                   className="w-full h-full border-none"
                   title="PDF preview"
                 />
-              ) : selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:") ? (
+              ) : selectedFile.fileUrl ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                   <Presentation className="h-16 w-16 text-primary/40 mb-4" />
                   <p className="text-muted-foreground mb-4">Preview not available for this file type</p>

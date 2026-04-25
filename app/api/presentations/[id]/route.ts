@@ -8,17 +8,28 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+function withResolvedFileUrl(doc: Record<string, unknown>) {
+  const hasBinary = Boolean(doc.hasBinary) || Boolean(doc.fileData);
+  return {
+    ...doc,
+    fileUrl: hasBinary && doc._id ? `/api/presentations/file/${String(doc._id)}` : String(doc.fileUrl || ""),
+    fileData: undefined,
+  };
+}
+
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await bootstrapData();
     if (!Types.ObjectId.isValid(params.id)) {
       return fail("Presentation not found.", 404);
     }
-    const item = await PresentationModel.findById(params.id).lean();
+    const item = await PresentationModel.findById(params.id)
+      .select("title fileUrl hasBinary mimeType type date slides fileData")
+      .lean();
     if (!item) {
       return fail("Presentation not found.", 404);
     }
-    return ok(item);
+    return ok(withResolvedFileUrl(item as Record<string, unknown>));
   } catch (error) {
     return fail(error instanceof Error ? error.message : "Failed to fetch presentation.", 500);
   }
@@ -37,6 +48,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const payload = {
       title: String(body?.title || "").trim(),
       fileUrl: String(body?.fileUrl || "").trim(),
+      mimeType: String(body?.mimeType || "").trim(),
+      hasBinary: false,
       type: String(body?.type || "General").trim(),
       date: String(body?.date || "").trim(),
       slides: Number(body?.slides || 0),
@@ -53,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (!updated) {
       return fail("Presentation not found.", 404);
     }
-    return ok(updated);
+    return ok(withResolvedFileUrl(updated as Record<string, unknown>));
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("Unauthorized", 401);

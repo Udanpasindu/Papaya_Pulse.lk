@@ -167,10 +167,10 @@ export const DEFAULT_DOCUMENTS: DocumentDTO[] = [
 ];
 
 export const DEFAULT_PRESENTATIONS: PresentationDTO[] = [
-  { title: "Project Proposal", type: "Proposal", date: "2025-02-12", fileUrl: "", slides: 24 },
-  { title: "Progress Presentation 1", type: "Progress", date: "2025-05-20", fileUrl: "", slides: 32 },
-  { title: "Progress Presentation 2", type: "Progress", date: "2025-09-08", fileUrl: "", slides: 38 },
-  { title: "Final Presentation", type: "Final", date: "2025-12-15", fileUrl: "", slides: 48 },
+  { title: "Project Proposal", type: "Proposal", date: "2025-02-12", fileUrl: "", mimeType: "", slides: 24 },
+  { title: "Progress Presentation 1", type: "Progress", date: "2025-05-20", fileUrl: "", mimeType: "", slides: 32 },
+  { title: "Progress Presentation 2", type: "Progress", date: "2025-09-08", fileUrl: "", mimeType: "", slides: 38 },
+  { title: "Final Presentation", type: "Final", date: "2025-12-15", fileUrl: "", mimeType: "", slides: 48 },
 ];
 
 export const DEFAULT_TEAM: TeamMemberDTO[] = [

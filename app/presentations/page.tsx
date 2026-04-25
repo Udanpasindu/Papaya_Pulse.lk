@@ -10,6 +10,13 @@ export default function PresentationsPage() {
   const { data, loading, error } = useApi<PresentationDTO[]>("/api/presentations");
   const [selectedFile, setSelectedFile] = useState<PresentationDTO | null>(null);
 
+  const canPreviewPdf = (item: PresentationDTO) => {
+    const mime = String(item.mimeType || "").toLowerCase();
+    const title = String(item.title || "").toLowerCase();
+    const url = String(item.fileUrl || "").toLowerCase();
+    return mime.includes("pdf") || title.endsWith(".pdf") || url.startsWith("data:application/pdf") || url.includes("/api/presentations/file/");
+  };
+
   return (
     <PageShell
       breadcrumbs={[{ label: "Presentations" }]}
@@ -103,7 +110,7 @@ export default function PresentationsPage() {
 
             {/* Content */}
             <div className="flex-1 overflow-hidden bg-black/40 rounded-b-2xl">
-              {selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:application/pdf") ? (
+              {canPreviewPdf(selectedFile) ? (
                 <iframe
                   src={selectedFile.fileUrl}
                   width="100%"
@@ -111,7 +118,7 @@ export default function PresentationsPage() {
                   className="w-full h-full border-none"
                   title="PDF preview"
                 />
-              ) : selectedFile.fileUrl && selectedFile.fileUrl.startsWith("data:") ? (
+              ) : selectedFile.fileUrl ? (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
                   <Presentation className="h-16 w-16 text-primary/40 mb-4" />
                   <p className="text-muted-foreground mb-4">Preview not available for this file type</p>
